@@ -7,6 +7,7 @@ target/
 *.class
 
 # 含密码的本地配置，不进版本库
+db.properties
 db-*.properties
 # 模板文件进库，各人复制成 db-opengauss.properties 再填密码
 !db-*.properties.template
