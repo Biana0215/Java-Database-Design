@@ -1,0 +1,6 @@
+# 复制本文件为 db-opengauss.properties，然后把 password 填上自己的账号密码
+# 目标文件已被 .gitignore 排除，不会提交，也不会覆盖别人的配置
+driver=org.opengauss.Driver
+url=jdbc:opengauss://192.168.98.129:7654/hospital
+user=test_user
+password=在这里填密码

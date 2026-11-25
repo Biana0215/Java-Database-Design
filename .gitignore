@@ -1,0 +1,20 @@
+# 编译产物与 IDE
+out/
+build/
+target/
+.idea/
+*.iml
+*.class
+
+# 含密码的本地配置，不进版本库
+db-*.properties
+# 模板文件进库，各人复制成 db-opengauss.properties 再填密码
+!db-*.properties.template
+
+# 驱动 jar 只有 900KB，随仓库分发，队友 clone 即可用
+# （不要在这里忽略 lib/*.jar）
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+*.log
