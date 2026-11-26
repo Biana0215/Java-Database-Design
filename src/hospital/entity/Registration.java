@@ -1,11 +1,12 @@
 package hospital.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
  * 挂号单实体，对应 registration 表。
- * patientName、doctorName 为非表字段，仅用于查询结果回填，不参与 INSERT/UPDATE。
+ * patientName、doctorName、workDate、period 为非表字段，由查询联表回填，仅用于界面展示，不参与 INSERT/UPDATE。
  */
 public class Registration {
 
@@ -44,6 +45,12 @@ public class Registration {
 
     // 医生姓名，非表字段，仅用于查询结果回填，不参与 INSERT/UPDATE
     private String doctorName;
+
+    // 就诊日期（取自 slot→schedule.work_date），非表字段，仅用于展示
+    private LocalDate workDate;
+
+    // 就诊时段（取自 schedule.period），非表字段，仅用于展示
+    private String period;
 
     public Registration() {
     }
@@ -111,6 +118,14 @@ public class Registration {
 
     public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
 
+    public LocalDate getWorkDate() { return workDate; }
+
+    public void setWorkDate(LocalDate workDate) { this.workDate = workDate; }
+
+    public String getPeriod() { return period; }
+
+    public void setPeriod(String period) { this.period = period; }
+
     public String toString() {
         return "Registration{" +
                 "regId=" + regId +
@@ -125,6 +140,8 @@ public class Registration {
                 ", refundReason=" + refundReason +
                 ", patientName=" + patientName +
                 ", doctorName=" + doctorName +
+                ", workDate=" + workDate +
+                ", period=" + period +
                 '}';
     }
 }

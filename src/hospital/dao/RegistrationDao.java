@@ -21,11 +21,11 @@ import java.util.List;
  */
 public class RegistrationDao {
 
-    // 挂号单查询公共字段与联表关系，用于回填患者姓名、医生姓名
+    // 挂号单查询公共字段与联表关系，用于回填患者姓名、医生姓名、就诊日期与时段
     private static final String SELECT_COLUMNS =
             "select r.reg_id, r.patient_id, r.slot_id, r.reg_time, r.reg_type, "
                     + "r.reg_fee, r.status, r.operator_id, r.refund_time, r.refund_reason, "
-                    + "p.patient_name, d.doctor_name "
+                    + "p.patient_name, d.doctor_name, s.work_date, s.period "
                     + "from registration r "
                     + "join patient p on r.patient_id=p.patient_id "
                     + "join slot sl on r.slot_id=sl.slot_id "
@@ -182,6 +182,11 @@ public class RegistrationDao {
         registration.setRefundReason(rs.getString("refund_reason"));
         registration.setPatientName(rs.getString("patient_name"));
         registration.setDoctorName(rs.getString("doctor_name"));
+        Date workDate = rs.getDate("work_date");
+        if (workDate != null) {
+            registration.setWorkDate(workDate.toLocalDate());
+        }
+        registration.setPeriod(rs.getString("period"));
         return registration;
     }
 

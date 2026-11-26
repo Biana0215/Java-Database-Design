@@ -1,7 +1,7 @@
 package hospital.ui;
 
 import hospital.entity.SysUser;
-import hospital.ui.module.PlaceholderPanel;
+import hospital.ui.module.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -201,34 +201,33 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * 模块面板工厂：未接入真实面板的模块落到 default 的占位面板。
-     * 各成员只在这里加自己那几行 case，冲突范围控制在相邻几行内。
+     * 模块面板工厂：按菜单名返回对应业务面板，未接入的落到占位面板。
      */
     private JPanel createPanel(String name) {
         switch (name) {
             // A · 排班号源
-            // case "排班管理": return new SchedulePanel();
-            // case "排班查询": return new ScheduleQueryPanel();
+            case "排班管理": return new SchedulePanel();
+            case "排班查询": return new ScheduleQueryPanel();
 
             // B · 挂号收费
-            // case "挂号": return new RegisterPanel();
-            // case "退号": return new RefundPanel();
-            // case "收费": return new ChargePanel();
-            // case "日结汇总": return new DailySummaryPanel();
+            case "挂号": return new RegisterPanel();
+            case "退号": return new RefundPanel();
+            case "收费": return new ChargePanel();
+            case "日结汇总": return new DailySummaryPanel();
 
             // C · 医生工作与统计报表
-            // case "今日挂号": return new TodayRegistrationPanel();
-            // case "就诊确认": return new VisitConfirmPanel();
-            // case "挂号量统计": return new RegistrationStatPanel();
-            // case "号源使用率": return new SlotUsagePanel();
-            // case "退号率": return new RefundRatePanel();
-            // case "收入统计": return new IncomeStatPanel();
+            case "今日挂号": return new DoctorWorkPanel();
+            case "就诊确认": return new VisitPanel();
+            case "挂号量统计": return new StatPanel(0);
+            case "号源使用率": return new StatPanel(1);
+            case "退号率": return new StatPanel(2);
+            case "收入统计": return new StatPanel(3);
 
             // D · 基础资料
-            // case "患者管理": return new PatientPanel();
-            // case "科室管理": return new DeptPanel();
-            // case "医生管理": return new DoctorPanel();
-            // case "用户管理": return new UserPanel();
+            case "患者管理": return new PatientPanel();
+            case "科室管理": return new DeptPanel();
+            case "医生管理": return new DoctorPanel();
+            case "用户管理": return new UserPanel();
 
             default:
                 return new PlaceholderPanel(name);
