@@ -2,10 +2,14 @@ package hospital.ui;
 
 import hospital.entity.SysUser;
 import hospital.service.SysUserService;
+import hospital.ui.common.UiTheme;
 import hospital.ui.common.UiUtil;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -13,18 +17,30 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.util.concurrent.ExecutionException;
 
 /**
- * 登录窗口：校验账号密码，成功后进入主窗体。
+ * 登录窗口：左侧品牌区 + 右侧表单区的卡片式登录页。
  */
 public class LoginFrame extends JFrame {
+
+    private static final int BRAND_WIDTH = 300;
+    private static final int FIELD_WIDTH = 300;
+    private static final int FIELD_HEIGHT = 32;
+    private static final int BUTTON_HEIGHT = 40;
 
     private final SysUserService userService = new SysUserService();
 
@@ -44,53 +60,10 @@ public class LoginFrame extends JFrame {
     private void initUi() {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridy = 0;
-        gbc.insets = new Insets(8, 0, 8, 8);
-        gbc.anchor = GridBagConstraints.LINE_END;
-
-        JLabel userLabel = new JLabel("用户名：");
-        userLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        gbc.gridx = 0;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(userLabel, gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(8, 0, 8, 0);
-        formPanel.add(usernameField, gbc);
-
-        JLabel pwdLabel = new JLabel("密　码：");
-        pwdLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(8, 0, 8, 8);
-        formPanel.add(pwdLabel, gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(8, 0, 8, 0);
-        formPanel.add(passwordField, gbc);
-
-        loginButton.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        exitButton.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        loginButton.setPreferredSize(new Dimension(96, 32));
-        exitButton.setPreferredSize(new Dimension(96, 32));
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 24, 8));
-        buttonPanel.add(loginButton);
-        buttonPanel.add(exitButton);
-
-        JPanel root = new JPanel(new BorderLayout(0, 12));
-        root.setBorder(BorderFactory.createEmptyBorder(24, 32, 16, 32));
-        root.add(formPanel, BorderLayout.CENTER);
-        root.add(buttonPanel, BorderLayout.SOUTH);
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(UiTheme.SURFACE);
+        root.add(buildBrandPanel(), BorderLayout.WEST);
+        root.add(buildFormArea(), BorderLayout.CENTER);
         setContentPane(root);
 
         // 回车即登录：默认按钮 + 两个输入框各自绑定
@@ -100,9 +73,140 @@ public class LoginFrame extends JFrame {
         usernameField.addActionListener(e -> doLogin());
         passwordField.addActionListener(e -> doLogin());
 
-        setSize(420, 260);
+        setSize(720, 420);
         setResizable(false);
         setLocationRelativeTo(null);
+    }
+
+    /**
+     * 左侧品牌区：主色渐变底 + 系统名 + 一行业务说明。
+     */
+    private JPanel buildBrandPanel() {
+        JPanel brand = new BrandPanel();
+        brand.setLayout(new GridBagLayout());
+        brand.setPreferredSize(new Dimension(BRAND_WIDTH, 0));
+        brand.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 24));
+
+        JPanel stack = new JPanel();
+        stack.setOpaque(false);
+        stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
+
+        LogoMark logo = new LogoMark();
+        logo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        stack.add(logo);
+        stack.add(Box.createVerticalStrut(22));
+
+        JLabel title = new JLabel("医院挂号系统");
+        title.setFont(UiTheme.titleFont(24, true));
+        title.setForeground(Color.WHITE);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        stack.add(title);
+        stack.add(Box.createVerticalStrut(10));
+
+        JLabel subtitle = new JLabel("门诊挂号 · 收费 · 统计");
+        subtitle.setFont(UiTheme.font(Font.PLAIN, 13));
+        subtitle.setForeground(new Color(255, 255, 255, 205));
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        stack.add(subtitle);
+
+        // 单组件 + 零权重，GridBagLayout 会把它整体居中
+        brand.add(stack);
+        return brand;
+    }
+
+    /**
+     * 右侧表单区：标题、账号、密码、登录按钮与初始账号提示。
+     */
+    private JPanel buildFormArea() {
+        exitButton.setFont(UiTheme.font(Font.PLAIN, 13));
+        exitButton.setForeground(UiTheme.TEXT_MUTED);
+        exitButton.setContentAreaFilled(false);
+        exitButton.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
+        exitButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        topBar.setBackground(UiTheme.SURFACE);
+        topBar.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 12));
+        topBar.add(exitButton);
+
+        JPanel area = new JPanel(new BorderLayout());
+        area.setBackground(UiTheme.SURFACE);
+        area.add(topBar, BorderLayout.NORTH);
+
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.LINE_START;
+
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 6, 0);
+        JLabel title = new JLabel("账号登录");
+        title.setFont(UiTheme.titleFont(20, true));
+        title.setForeground(UiTheme.TEXT_PRIMARY);
+        form.add(title, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 24, 0);
+        JLabel subtitle = new JLabel("请使用院内分配的账号进入系统");
+        subtitle.setFont(UiTheme.font(Font.PLAIN, 12));
+        subtitle.setForeground(UiTheme.TEXT_MUTED);
+        form.add(subtitle, gbc);
+
+        usernameField.setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
+        passwordField.setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
+        usernameField.setFont(UiTheme.font(Font.PLAIN, 14));
+        passwordField.setFont(UiTheme.font(Font.PLAIN, 14));
+
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 6, 0);
+        form.add(fieldLabel("用户名"), gbc);
+
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 14, 0);
+        form.add(usernameField, gbc);
+
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 6, 0);
+        form.add(fieldLabel("密　码"), gbc);
+
+        gbc.gridy = 5;
+        gbc.insets = new Insets(0, 0, 22, 0);
+        form.add(passwordField, gbc);
+
+        // 登录按钮同时是默认按钮，FlatLaf 会用 UiTheme 里的主色绘制
+        loginButton.setFont(UiTheme.titleFont(15, true));
+        loginButton.setBackground(UiTheme.PRIMARY);
+        loginButton.setForeground(Color.WHITE);
+        loginButton.setPreferredSize(new Dimension(FIELD_WIDTH, BUTTON_HEIGHT));
+        loginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        gbc.gridy = 6;
+        gbc.insets = new Insets(0, 0, 14, 0);
+        form.add(loginButton, gbc);
+
+        gbc.gridy = 7;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        JLabel hint = new JLabel("初始账号：admin / 123456");
+        hint.setFont(UiTheme.font(Font.PLAIN, 12));
+        hint.setForeground(UiTheme.TEXT_MUTED);
+        form.add(hint, gbc);
+
+        JPanel center = new JPanel(new GridBagLayout());
+        center.setBackground(UiTheme.SURFACE);
+        center.add(form);
+        area.add(center, BorderLayout.CENTER);
+        return area;
+    }
+
+    private JLabel fieldLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(UiTheme.font(Font.PLAIN, 13));
+        label.setForeground(UiTheme.TEXT_MUTED);
+        label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+        return label;
     }
 
     /**
@@ -177,5 +281,57 @@ public class LoginFrame extends JFrame {
         exitButton.setEnabled(!busy);
         usernameField.setEnabled(!busy);
         passwordField.setEnabled(!busy);
+    }
+
+    /**
+     * 左侧品牌底：主色渐变 + 两枚淡白装饰圆。
+     */
+    private static final class BrandPanel extends JPanel {
+
+        private BrandPanel() {
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth();
+            int h = getHeight();
+            g2.setPaint(new GradientPaint(0, 0, UiTheme.PRIMARY_DARK, w, h, UiTheme.PRIMARY));
+            g2.fillRect(0, 0, w, h);
+            g2.setColor(new Color(255, 255, 255, 26));
+            g2.fillOval(w - 130, -80, 240, 240);
+            g2.setColor(new Color(255, 255, 255, 16));
+            g2.fillOval(-100, h - 130, 250, 250);
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    /**
+     * 品牌标识：白色圆角方块 + 主色医疗十字，纯绘制，不引入图片资源。
+     */
+    private static final class LogoMark extends JComponent {
+
+        private static final int SIZE = 46;
+
+        private LogoMark() {
+            setOpaque(false);
+            setPreferredSize(new Dimension(SIZE, SIZE));
+            setMinimumSize(new Dimension(SIZE, SIZE));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(0, 0, SIZE, SIZE, 14, 14);
+            g2.setColor(UiTheme.PRIMARY);
+            g2.fillRoundRect(SIZE / 2 - 3, 11, 6, SIZE - 22, 4, 4);
+            g2.fillRoundRect(11, SIZE / 2 - 3, SIZE - 22, 6, 4, 4);
+            g2.dispose();
+        }
     }
 }
